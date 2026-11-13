@@ -1,0 +1,20 @@
+# No secrets in here: every value comes from an environment variable.
+# dev  = local DuckDB file (laptop + CI)       prod = BigQuery (scheduled runs)
+qsr:
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', '../warehouse/qsr.duckdb') }}"
+      schema: qsr
+      threads: 4
+    prod:
+      type: bigquery
+      method: oauth            # Application Default Credentials: Workload Identity in CI, gcloud locally
+      project: "{{ env_var('GCP_PROJECT', 'set-GCP_PROJECT') }}"
+      dataset: qsr             # dbt writes qsr_staging, qsr_marts, qsr_reporting
+      location: "{{ env_var('BQ_LOCATION', 'US') }}"
+      threads: 4
+      job_execution_timeout_seconds: 600
+      maximum_bytes_billed: 2000000000   # 2 GB guardrail per query; the whole project is ~20 MB
+      priority: interactive

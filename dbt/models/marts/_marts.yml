@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: Order fact table (incremental, partitioned by month and clustered by channel/region in BigQuery).
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_customers'), field: customer_id}
+      - name: store_id
+        data_tests:
+          - relationships:
+              arguments: {to: ref('dim_stores'), field: store_id}
+      - name: daypart
+        data_tests: [not_null]
+
+  - name: dim_customers
+    columns:
+      - name: customer_id
+        data_tests: [unique, not_null]
+      - name: app_order_share
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 0, max_value: 1}
+
+  - name: dim_stores
+    columns:
+      - name: store_id
+        data_tests: [unique, not_null]
+
+  - name: mart_channel_kpis
+    columns:
+      - name: order_channel
+        data_tests: [unique, not_null]
+
+  - name: mart_strategy_timeline
+    columns:
+      - name: fiscal_year
+        data_tests: [unique, not_null]
+      - name: us_population
+        data_tests: [not_null]
+
+  - name: mart_keyword_trends
+    data_tests:
+      - dbt_utils_free_unique_combination:
+          arguments: {columns: [fiscal_year, keyword]}
+
+  - name: mart_competitor_language
+    data_tests:
+      - dbt_utils_free_unique_combination:
+          arguments: {columns: [document, keyword]}

@@ -1,0 +1,15 @@
+.git
+.github
+data
+warehouse
+exports
+analysis
+tableau
+docs
+tests
+infra
+**/__pycache__
+**/.pytest_cache
+dbt/target
+dbt/logs
+*.duckdb

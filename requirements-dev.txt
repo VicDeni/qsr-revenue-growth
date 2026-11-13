@@ -1,0 +1,9 @@
+-r requirements.txt
+pytest==9.1.1
+ruff==0.17.5
+# analysis notebook
+statsmodels==0.15.0
+scikit-learn==1.9.1
+matplotlib==3.11.2
+jupyter
+nbconvert

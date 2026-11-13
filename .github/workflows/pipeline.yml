@@ -1,0 +1,59 @@
+# Scheduled production run: Docker container -> BigQuery, authenticated with Workload Identity
+# Federation (no service-account keys stored in GitHub). Set up once with infra/setup_gcp.sh.
+name: scheduled-bigquery-pipeline
+
+on:
+  schedule:
+    - cron: "17 11 * * *"     # daily at 11:17 UTC (6:17am Eastern, EST)
+  workflow_dispatch:
+    inputs:
+      full_refresh:
+        description: Rebuild incremental models from scratch
+        type: boolean
+        default: false
+
+concurrency:
+  group: bigquery-pipeline
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write              # lets the job request a GitHub OIDC token for Google Cloud
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - run: docker build -t qsr-pipeline .
+
+      - name: Ingest -> dbt build (BigQuery) -> export
+        env:
+          GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+          BQ_LOCATION: ${{ vars.BQ_LOCATION || 'US' }}
+          LANDING_URI: ${{ vars.LANDING_URI }}               # gs://bucket/landing, or empty = repo data/landing
+          SHEETS_SPREADSHEET_ID: ${{ vars.SHEETS_SPREADSHEET_ID }}  # optional: feeds Tableau Public
+          FULL_REFRESH: ${{ inputs.full_refresh && '--full-refresh' || '' }}
+        run: |
+          mkdir -p exports
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -e WAREHOUSE=bigquery -e GCP_PROJECT -e BQ_LOCATION -e LANDING_URI -e SHEETS_SPREADSHEET_ID \
+            -e GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp.json \
+            -v "${{ steps.auth.outputs.credentials_file_path }}:/secrets/gcp.json:ro" \
+            -v "$PWD/data/landing:/app/data/landing:ro" \
+            -v "$PWD/exports:/app/exports" \
+            qsr-pipeline run $FULL_REFRESH
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: tableau-extracts
+          path: exports/
+          retention-days: 14

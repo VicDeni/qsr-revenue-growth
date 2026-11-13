@@ -1,0 +1,11 @@
+# Pipeline runtime (what the Docker image installs). Versions tested together on Python 3.13.
+dbt-core==1.12.7
+dbt-duckdb==1.11.1
+dbt-bigquery==1.12.3
+duckdb==2.0.0
+google-cloud-bigquery==3.47.0
+google-cloud-storage==3.17.1
+pandas==3.0.5
+pyarrow==26.0.1
+db-dtypes==1.9.0
+gspread==6.2.1

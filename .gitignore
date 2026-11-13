@@ -1,0 +1,14 @@
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.venv/
+warehouse/
+dbt/target/
+dbt/logs/
+logs/
+*.duckdb
+*.duckdb.wal
+gha-creds-*.json
+.env
+exports/

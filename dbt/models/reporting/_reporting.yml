@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: rpt_orders_tableau
+    description: Order-level reporting table feeding the Tableau Public dashboard (via CSV or Google Sheets).
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: customer_app_adoption
+        data_tests: [not_null]

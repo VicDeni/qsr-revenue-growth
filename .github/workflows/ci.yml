@@ -1,0 +1,43 @@
+# Every push / PR: lint, unit tests, the full pipeline on DuckDB, and a Docker build + run.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt pytest==9.1.1 ruff==0.17.5
+      - run: ruff check pipeline tests
+      - run: pytest -q
+      - name: End-to-end on DuckDB (ingest -> dbt build -> export)
+        run: python -m pipeline run
+      - name: Idempotency (a second ingest must load nothing)
+        run: python -m pipeline ingest 2>&1 | tee ingest.log && grep -q "no new files" ingest.log
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - run: docker build -t qsr-pipeline .
+      - name: Run the container against DuckDB
+        run: |
+          mkdir -p warehouse exports
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -v "$PWD/data/landing:/app/data/landing:ro" \
+            -v "$PWD/warehouse:/app/warehouse" -v "$PWD/exports:/app/exports" \
+            qsr-pipeline run
+          test -s exports/orders.csv

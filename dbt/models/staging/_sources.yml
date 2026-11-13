@@ -1,0 +1,23 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Append-only landing tables written by `python -m pipeline ingest`. All source columns are STRING.
+    schema: "{{ env_var('RAW_SCHEMA', 'qsr_raw') }}"
+    tables:
+      - name: orders
+        description: Point-of-sale orders, one monthly file per load (100k orders, Jan 2024 - Dec 2025).
+        config:
+          loaded_at_field: _loaded_at
+          freshness:            # `dbt source freshness`: alert if no new POS file in 35 days
+            warn_after: {count: 35, period: day}
+      - name: store_counts
+        description: Starbucks store counts by ownership and geography, parsed from 10-K Item 1 (FY1996-FY2025).
+      - name: keyword_trends
+        description: Keyword counts and mentions per 10k words in Starbucks 10-K Item 1 text, by fiscal year.
+      - name: state_population
+        description: US resident population by state and year (1996-2025).
+      - name: competitor_keywords
+        description: Keyword mentions per 10k words in Starbucks, McDonald's and Dunkin' 10-K business sections.
+      - name: _load_audit
+        description: One row per landing file loaded (file name, MD5, row count, load time).

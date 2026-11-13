@@ -1,0 +1,62 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: Typed, deduplicated orders. `is_rewards_member` is recorded per order in the source.
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: order_date
+        data_tests: [not_null]
+      - name: order_hour
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 0, max_value: 23}
+      - name: order_channel
+        data_tests:
+          - accepted_values:
+              arguments: {values: ["Mobile App", "Drive-Thru", "In-Store Cashier", "Kiosk"]}
+      - name: day_of_week_num
+        data_tests: [not_null]
+      - name: items
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 1, max_value: 25}
+      - name: customizations
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 0, max_value: 15}
+      - name: revenue
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 0.01, max_value: 500}
+      - name: fulfillment_min
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 0, max_value: 60}
+      - name: satisfaction_score
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 1, max_value: 5}
+
+  - name: stg_store_counts
+    columns:
+      - name: fiscal_year
+        data_tests: [unique, not_null]
+      - name: total_stores_reported
+        data_tests: [not_null]
+
+  - name: stg_keyword_trends
+    columns:
+      - name: per_10k_words
+        data_tests: [not_null]
+
+  - name: stg_state_population
+    columns:
+      - name: population
+        data_tests: [not_null]
+
+  - name: stg_competitor_keywords
+    columns:
+      - name: fiscal_year
+        data_tests: [not_null]

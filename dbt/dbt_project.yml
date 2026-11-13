@@ -1,0 +1,34 @@
+name: qsr
+version: "1.0.0"
+config-version: 2
+profile: qsr
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # 10-K terms tracked over time (Starbucks Item 1, FY1996-FY2025)
+  strategy_keywords: [digital, mobile, app, mobile_order, rewards, starbucks_rewards, delivery, drive_through,
+                      china, international, licensed, experience, customer_experience, technology,
+                      innovation, sustainability, plant_based, cold_beverage, coffee, food, brand]
+  # terms available in the Starbucks / McDonald's / Dunkin' comparison file
+  competitor_keywords: [digital, mobile, app, delivery, drive, franchise, licensed, sustainability, china,
+                        experience, technology, international, revenue, customers, brand, innovation, loyalty]
+
+models:
+  qsr:
+    staging:
+      +schema: staging
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+    reporting:
+      +schema: reporting
+      +materialized: table
+
+tests:
+  qsr:
+    +severity: error
